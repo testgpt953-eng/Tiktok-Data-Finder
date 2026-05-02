@@ -42,15 +42,15 @@ STOPWORDS = {
 }
 
 # =========================
-# NEW CONTENT FILTER (ADDED ONLY)
+# NEW CONTENT FILTER
 # =========================
 def is_content_match(text: str, niche: str) -> bool:
     text = text.lower()
     niche = niche.lower()
     
     keywords_map = {
-        "street food": ["street food", "india street food", "dirty food", "unhygienic", "roadside food"],
-        "cake": ["cake", "bakery", "icing", "chocolate cake", "asmr baking"],
+        "street food": ["street food", "india street food", "dirty", "unhygienic", "roadside"],
+        "cake": ["cake", "bakery", "icing", "chocolate", "asmr"],
         "crime": ["police", "arrest", "crime", "bodycam", "interrogation"]
     }
     
@@ -146,7 +146,7 @@ def fetch_video_details(video_ids):
     return result
 
 # =========================
-# UPDATED STRICT FILTER (ONLY CHANGE INSIDE)
+# STRICT FILTER (UPDATED)
 # =========================
 def is_strict_match(item, window_minutes: int, duration_bucket: str, niche_name: str) -> bool:
     try:
@@ -168,10 +168,9 @@ def is_strict_match(item, window_minutes: int, duration_bucket: str, niche_name:
         if not duration_matches_bucket(duration_seconds, duration_bucket):
             return False
 
-        # ✅ NEW FILTER
+        # 🔥 NEW CONTENT FILTER
         title = snippet.get("title", "")
         desc = snippet.get("description", "")
-
         if not is_content_match(title + " " + desc, niche_name):
             return False
 
@@ -183,21 +182,38 @@ def is_strict_match(item, window_minutes: int, duration_bucket: str, niche_name:
         return False
 
 # =========================
-# UI (UNCHANGED)
+# UI
 # =========================
 st.set_page_config(page_title="YouTube Shorts Data Finder", layout="wide")
 st.title("🎯 YouTube Shorts Data Finder")
 
-niche_name = st.text_input("Main query / niche")
-search_btn = st.button("Search")
+col1, col2 = st.columns(2)
 
+with col1:
+    niche_name = st.text_input("Main niche")
+    user_keywords = st.text_area("Extra keywords (comma separated)")
+    selected_language = st.selectbox("Language", list(LANGUAGE_OPTIONS.keys()))
+
+with col2:
+    latest_minutes = st.slider("Latest minutes", 1, 180, 60)
+    duration_option = st.selectbox("Duration", list(DURATION_BUCKETS.keys()))
+    num_results = st.number_input("Results", 1, 50, 10)
+
+search_btn = st.button("🚀 Search")
+
+# =========================
+# MAIN
+# =========================
 if search_btn:
-    queries = generate_query_list(niche_name, "")
-    published_after_iso = (datetime.now(timezone.utc) - timedelta(minutes=60)).isoformat().replace("+00:00", "Z")
+    language_code = LANGUAGE_OPTIONS[selected_language]
+    duration_bucket = DURATION_BUCKETS[duration_option]
+
+    queries = generate_query_list(niche_name, user_keywords)
+    published_after_iso = (datetime.now(timezone.utc) - timedelta(minutes=latest_minutes)).isoformat().replace("+00:00", "Z")
 
     candidate_ids = []
     for q in queries:
-        items = fetch_search_results(q, "", published_after_iso, 25)
+        items = fetch_search_results(q, language_code, published_after_iso, 25)
         for it in items:
             vid = it.get("id", {}).get("videoId")
             if vid:
@@ -207,7 +223,10 @@ if search_btn:
 
     results = [
         item for item in details.values()
-        if is_strict_match(item, 60, "lt_60", niche_name)
+        if is_strict_match(item, latest_minutes, duration_bucket, niche_name)
     ]
 
-    st.write(f"Found: {len(results)} videos")
+    st.success(f"Found {len(results)} videos")
+
+    for r in results[:num_results]:
+        st.write(r["snippet"]["title"])
