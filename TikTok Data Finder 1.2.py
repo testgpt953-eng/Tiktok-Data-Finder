@@ -227,6 +227,20 @@ if search_btn:
     ]
 
     st.success(f"Found {len(results)} videos")
+for r in results[:num_results]:
+    snippet = r["snippet"]
+    vid = r["id"]
 
-    for r in results[:num_results]:
-        st.write(r["snippet"]["title"])
+    title = snippet.get("title", "No title")
+    channel = snippet.get("channelTitle", "Unknown")
+    
+    video_url = f"https://www.youtube.com/watch?v={vid}"
+    shorts_url = f"https://www.youtube.com/shorts/{vid}"
+
+    st.markdown(f"### [{title}]({video_url})")
+    st.write(f"Channel: {channel}")
+    
+    st.link_button("▶ Watch Video", video_url)
+    st.link_button("📱 Open Shorts", shorts_url)
+
+    st.write("---")
