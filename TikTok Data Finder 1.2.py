@@ -205,6 +205,24 @@ search_btn = st.button("🚀 Search")
 # MAIN
 # =========================
 if search_btn:
+      # ✅ MOVE THIS INSIDE
+    for r in results[:num_results]:
+        snippet = r["snippet"]
+        vid = r["id"]
+
+        title = snippet.get("title", "No title")
+        channel = snippet.get("channelTitle", "Unknown")
+
+        video_url = f"https://www.youtube.com/watch?v={vid}"
+        shorts_url = f"https://www.youtube.com/shorts/{vid}"
+
+        st.markdown(f"### [{title}]({video_url})")
+        st.write(f"Channel: {channel}")
+        
+        st.link_button("▶ Watch Video", video_url)
+        st.link_button("📱 Open Shorts", shorts_url)
+
+        st.write("---")
     language_code = LANGUAGE_OPTIONS[selected_language]
     duration_bucket = DURATION_BUCKETS[duration_option]
 
