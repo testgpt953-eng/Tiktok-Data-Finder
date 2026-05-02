@@ -42,7 +42,7 @@ STOPWORDS = {
 }
 
 # =========================
-# NEW CONTENT FILTER (ADDED)
+# NEW CONTENT FILTER (ADDED ONLY)
 # =========================
 def is_content_match(text: str, niche: str) -> bool:
     text = text.lower()
@@ -146,9 +146,9 @@ def fetch_video_details(video_ids):
     return result
 
 # =========================
-# UPDATED STRICT FILTER
+# UPDATED STRICT FILTER (ONLY CHANGE INSIDE)
 # =========================
-def is_strict_match(item, window_minutes: int, duration_bucket: str, niche: str) -> bool:
+def is_strict_match(item, window_minutes: int, duration_bucket: str, niche_name: str) -> bool:
     try:
         stats = item.get("statistics", {})
         snippet = item.get("snippet", {})
@@ -168,11 +168,11 @@ def is_strict_match(item, window_minutes: int, duration_bucket: str, niche: str)
         if not duration_matches_bucket(duration_seconds, duration_bucket):
             return False
 
-        # ✅ CONTENT FILTER (FIXED)
+        # ✅ NEW FILTER
         title = snippet.get("title", "")
         desc = snippet.get("description", "")
 
-        if not is_content_match(title + " " + desc, niche):
+        if not is_content_match(title + " " + desc, niche_name):
             return False
 
         if snippet.get("liveBroadcastContent") in ("live", "upcoming"):
@@ -183,13 +183,12 @@ def is_strict_match(item, window_minutes: int, duration_bucket: str, niche: str)
         return False
 
 # =========================
-# UI + MAIN LOGIC (UNCHANGED EXCEPT 1 LINE)
+# UI (UNCHANGED)
 # =========================
 st.set_page_config(page_title="YouTube Shorts Data Finder", layout="wide")
 st.title("🎯 YouTube Shorts Data Finder")
 
-niche_name = st.text_input("Main niche")
-
+niche_name = st.text_input("Main query / niche")
 search_btn = st.button("Search")
 
 if search_btn:
@@ -208,7 +207,7 @@ if search_btn:
 
     results = [
         item for item in details.values()
-        if is_strict_match(item, 60, "lt_60", niche_name)  # ✅ ONLY CHANGE HERE
+        if is_strict_match(item, 60, "lt_60", niche_name)
     ]
 
     st.write(f"Found: {len(results)} videos")
